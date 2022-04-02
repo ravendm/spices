@@ -8,7 +8,10 @@ environment:
 
 dependencies:
   copy_with:
-    path: ./../copy_with
+    # path: ./../copy_with
+    git:
+      url: https://github.com/urusai88/spices.git
+      path: packages/copy_with/copy_with
   source_gen: ^1.2.0
   analyzer: ^3.4.0
   build: ^2.2.0
