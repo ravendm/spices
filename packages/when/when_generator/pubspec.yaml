@@ -1,0 +1,17 @@
+name: when_generator
+description: A starting point for Dart libraries or applications.
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ">=2.15.0-0 <3.0.0"
+
+dependencies:
+  when:
+    path: ./../when
+  source_gen: ^1.2.0
+  analyzer: ^3.4.0
+  build: ^2.2.0
+
+dev_dependencies:
+  build_runner: ^2.1.0

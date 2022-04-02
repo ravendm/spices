@@ -1,0 +1,17 @@
+targets:
+  $default:
+    builders:
+      when_generator:
+        # enabled: true
+        generate_for:
+          - example/*
+
+builders:
+  when_generator:
+    import: "package:when_generator/builder.dart"
+    builder_factories: ["when"]
+    build_extensions: {".dart": ["when_generator.g.part"]}
+    auto_apply: dependents
+    applies_builders: ["source_gen|combining_builder"]
+    build_to: cache
+    # target: ":copy_with_generator"
