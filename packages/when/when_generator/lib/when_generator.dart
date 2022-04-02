@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
+import 'package:logging/logging.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:when/when.dart';
 
@@ -34,12 +35,13 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
   late List<ClassElement> _children;
   late ConstantReader _annotation;
   late List<String> _genericList;
-
-  final _childDeclarations = <ChildDeclaration>[];
+  late List<ChildDeclaration> _childDeclarations;
 
   String get _typeName => _element.name;
 
   String get _generic => _genericList.isNotEmpty ? '<${_genericList.join(', ')}>' : '';
+
+  Logger get logger => Logger('WhenGenerator');
 
   @override
   String generateForAnnotatedElement(
@@ -52,9 +54,15 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
     _annotation = annotation;
     _genericList = _element.typeParameters.map((e) => e.name).toList();
 
+    logger.info('WhenGenerator build');
+    logger.info('> type name [${_element.displayName}]${_generic.isNotEmpty ? ' generics: $_generic' : ''}');
+
     final extensionName = '${_element.name}WhenExtension';
 
     _children = _annotation.read('children').listValue.map((e) => e.toTypeValue()!.element! as ClassElement).toList();
+
+    logger.info('> children: ' + _children.map((e) => e.displayName).toList().join(', '));
+
     _buildDeclarations();
 
     final result = '''
@@ -120,6 +128,7 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
   }
 
   void _buildDeclarations() {
+    _childDeclarations = [];
     for (final child in _children) {
       /// argument name
       final typeName = child.name;

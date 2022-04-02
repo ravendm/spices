@@ -27,3 +27,17 @@ class _Monster<A, B, C> extends Mobile<A, C> {
 class _EmptyNPC extends Mobile {
   const _EmptyNPC({required int pos}) : super(pos: pos, data: null);
 }
+
+@When(children: [B, C])
+class A {
+
+}
+
+@When(children: [C])
+class B extends A {
+
+}
+
+class C extends B {
+
+}

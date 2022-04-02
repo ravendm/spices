@@ -40,3 +40,55 @@ extension MobileWhenExtension<T1, T2> on Mobile<T1, T2> {
     return orElse(this);
   }
 }
+
+extension AWhenExtension on A {
+  _T when<_T>({
+    required _T Function(B) b,
+    required _T Function(C) c,
+  }) {
+    if (this is B) {
+      return b(this as B);
+    } else if (this is C) {
+      return c(this as C);
+    }
+
+    throw 'Invalid self type $runtimeType';
+  }
+
+  _T maybeWhen<_T>({
+    _T Function(B)? b,
+    _T Function(C)? c,
+    required _T Function(A) orElse,
+  }) {
+    if (this is B && b != null) {
+      return b(this as B);
+    } else if (this is C && c != null) {
+      return c(this as C);
+    }
+
+    return orElse(this);
+  }
+}
+
+extension BWhenExtension on B {
+  _T when<_T>({
+    required _T Function(C) c,
+  }) {
+    if (this is C) {
+      return c(this as C);
+    }
+
+    throw 'Invalid self type $runtimeType';
+  }
+
+  _T maybeWhen<_T>({
+    _T Function(C)? c,
+    required _T Function(B) orElse,
+  }) {
+    if (this is C && c != null) {
+      return c(this as C);
+    }
+
+    return orElse(this);
+  }
+}
