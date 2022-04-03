@@ -67,62 +67,112 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
     final result = '''
     extension $extensionName$_generic on $_typeName$_generic {
-       ${_when()}
+       ${_build()}
     }
     ''';
 
     return result;
   }
 
-  String _when() {
+  String _build() {
+    final argumentMapList = <String>[];
+    final argumentMapFutureList = <String>[];
+    final argumentMaybeMapList = <String>[];
+    final argumentMaybeMapFutureList = <String>[];
     final argumentWhenList = <String>[];
-    final argumentMaybeWhenList = <String>[];
-    final conditionWhenList = <String>[];
-    final conditionMaybeWhenList = <String>[];
+    final argumentWhenFutureList = <String>[];
+    final conditionMapList = <String>[];
+    final conditionMaybeMapList = <String>[];
     final returnList = <String>[];
     for (final childDeclaration in _childDeclarations) {
       final argName = childDeclaration.argumentName;
       final typeName = childDeclaration.typeName;
       final generics = childDeclaration.genericsMapped.isEmpty ? '' : '<${childDeclaration.genericsMapped.join(', ')}>';
 
-      argumentWhenList.add('required _T Function($typeName$generics) $argName');
-      argumentMaybeWhenList.add('_T Function($typeName$generics)? $argName');
-      conditionWhenList.add('this is $typeName$generics');
-      conditionMaybeWhenList.add('this is $typeName$generics && $argName != null');
+      argumentMapList.add('required _T Function($typeName$generics) $argName');
+      argumentMapFutureList.add('required Future<_T> Function($typeName$generics) $argName');
+      argumentMaybeMapList.add('_T Function($typeName$generics)? $argName');
+      argumentMaybeMapFutureList.add('Future<_T> Function($typeName$generics)? $argName');
+      argumentWhenList.add('Function($typeName$generics)? $argName');
+      argumentWhenFutureList.add('Future<void> Function($typeName$generics)? $argName');
+      conditionMapList.add('this is $typeName$generics');
+      conditionMaybeMapList.add('this is $typeName$generics && $argName != null');
       returnList.add('$argName(this as $typeName$generics)');
     }
 
-    argumentMaybeWhenList.add('required _T Function($_typeName$_generic) orElse');
+    argumentMaybeMapList.add('required _T Function($_typeName$_generic) orElse');
+    argumentMaybeMapFutureList.add('required Future<_T> Function($_typeName$_generic) orElse');
 
+    final blockMapList = <String>[];
+    final blockMapFutureList = <String>[];
+    final blockMaybeMapList = <String>[];
+    final blockMaybeMapFutureList = <String>[];
     final blockWhenList = <String>[];
-    final blockMaybeWhenList = <String>[];
-    for (var i = 0; i < conditionWhenList.length; ++i) {
-      blockWhenList.add('''if (${conditionWhenList[i]}) { 
+    final blockWhenFutureList = <String>[];
+    for (var i = 0; i < conditionMapList.length; ++i) {
+      blockMapList.add('''if (${conditionMapList[i]}) {
         return ${returnList[i]};
       }''');
-      blockMaybeWhenList.add('''if (${conditionMaybeWhenList[i]}) { 
+      blockMapFutureList.add('''if (${conditionMapList[i]}) { 
         return ${returnList[i]};
+      }''');
+      blockMaybeMapList.add('''if (${conditionMaybeMapList[i]}) { 
+        return ${returnList[i]};
+      }''');
+      blockMaybeMapFutureList.add('''if (${conditionMaybeMapList[i]}) { 
+        return ${returnList[i]};
+      }''');
+      blockWhenList.add('''if (${conditionMaybeMapList[i]}) { 
+        ${returnList[i]};
+        return true;
+      }''');
+      blockWhenFutureList.add('''if (${conditionMaybeMapList[i]}) { 
+        await ${returnList[i]};
+        return true;
       }''');
     }
 
-    final blocksWhen = blockWhenList.join(' else ');
-    final blocksMaybeWhen = blockMaybeWhenList.join(' else ');
-
     return '''
-       _T when<_T>({
-          ${argumentWhenList.join(',\n')},
+       _T map<_T>({
+          ${argumentMapList.join(',\n')},
        }) {
-          ${blocksWhen}
-          
+          ${blockMapList.join('\n')}
           throw 'Invalid self type \$runtimeType';
        }
        
-       _T maybeWhen<_T>({
-          ${argumentMaybeWhenList.join(',\n')},
+       Future<_T> mapFuture<_T>({
+          ${argumentMapFutureList.join(',\n')},
        }) {
-          ${blocksMaybeWhen}
-          
+          ${blockMapFutureList.join('\n')}
+          throw 'Invalid self type \$runtimeType';
+       }
+       
+       _T maybeMap<_T>({
+          ${argumentMaybeMapList.join(',\n')},
+       }) {
+          ${blockMaybeMapList.join('\n')}
           return orElse(this);
+       }
+       
+       Future<_T> maybeMapFuture<_T>({
+          ${argumentMaybeMapFutureList.join(',\n')},
+       }) {
+          ${blockMaybeMapFutureList.join('\n')}
+          return orElse(this);        
+       }
+       
+       bool when({
+          ${argumentWhenList.join(',\n')},
+       }) {
+          ${blockWhenList.join('\n')}
+          return false;
+       }
+       
+       Future<bool> whenFuture({
+         ${argumentWhenFutureList.join(',\n')},
+       }) async {
+         ${blockWhenFutureList.join('\n')}
+         return false;
        }
     ''';
   }
@@ -182,5 +232,11 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
       _childDeclarations.add(childDeclaration);
     }
+  }
+
+  String _argName(ClassElement element) {
+    final typeName = _element.name;
+    final underTrimmedTypeName = RegExp(r'^_*(.*)$').firstMatch(typeName)!.group(1)!;
+    return underTrimmedTypeName.substring(0, 1).toLowerCase() + underTrimmedTypeName.substring(1);
   }
 }
