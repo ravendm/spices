@@ -101,7 +101,7 @@ class WhenUtils {
     return '''
       $returnType maybeMap<$returnType>({
         ${struct.argumentList.join(', ')},
-        required $returnType Function($orElseArgument) orElse(),
+        required $returnType Function($orElseArgument) orElse,
       }) {
         ${blockList.join(' else ')}
         else {
