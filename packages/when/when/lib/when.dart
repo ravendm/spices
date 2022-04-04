@@ -5,3 +5,7 @@ class When {
 
   final List<Type> children;
 }
+
+class WhenEnum {
+  const WhenEnum();
+}

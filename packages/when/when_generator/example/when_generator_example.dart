@@ -41,3 +41,14 @@ class B extends A {
 class C extends B {
 
 }
+
+@WhenEnum()
+enum Enum1 {
+  success,
+  error,
+  loading,
+}
+
+extension E1 on Enum1 {
+  bool get isA => true;
+}

@@ -3,6 +3,7 @@ import 'package:build/build.dart';
 import 'package:logging/logging.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:when/when.dart';
+import 'package:when_generator/utils.dart';
 
 class ChildDeclaration {
   const ChildDeclaration({
@@ -41,6 +42,9 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
   String get _generic => _genericList.isNotEmpty ? '<${_genericList.join(', ')}>' : '';
 
+  List<GeneratorEntity> get _entities =>
+      _childDeclarations.map((e) => GeneratorClassEntity(argName: e.argumentName, typeName: e.typeName)).toList();
+
   Logger get logger => Logger('WhenGenerator');
 
   @override
@@ -67,114 +71,55 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
     final result = '''
     extension $extensionName$_generic on $_typeName$_generic {
-       ${_build()}
+       ${_map()}
+       ${_maybeMap()}
+       ${_when()}
+       ${_maybeWhen()}
+       ${_whenFuture()}
+       ${_maybeWhenFuture()}
+       
+       ${_is()}
+       
+       ${_as()}
     }
     ''';
 
     return result;
   }
 
-  String _build() {
-    final argumentMapList = <String>[];
-    final argumentMapFutureList = <String>[];
-    final argumentMaybeMapList = <String>[];
-    final argumentMaybeMapFutureList = <String>[];
-    final argumentWhenList = <String>[];
-    final argumentWhenFutureList = <String>[];
-    final conditionMapList = <String>[];
-    final conditionMaybeMapList = <String>[];
-    final returnList = <String>[];
-    for (final childDeclaration in _childDeclarations) {
-      final argName = childDeclaration.argumentName;
-      final typeName = childDeclaration.typeName;
-      final generics = childDeclaration.genericsMapped.isEmpty ? '' : '<${childDeclaration.genericsMapped.join(', ')}>';
+  String _map() {
+    return WhenUtils.generateMap(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
+  }
 
-      argumentMapList.add('required _T Function($typeName$generics) $argName');
-      argumentMapFutureList.add('required Future<_T> Function($typeName$generics) $argName');
-      argumentMaybeMapList.add('_T Function($typeName$generics)? $argName');
-      argumentMaybeMapFutureList.add('Future<_T> Function($typeName$generics)? $argName');
-      argumentWhenList.add('Function($typeName$generics)? $argName');
-      argumentWhenFutureList.add('Future<void> Function($typeName$generics)? $argName');
-      conditionMapList.add('this is $typeName$generics');
-      conditionMaybeMapList.add('this is $typeName$generics && $argName != null');
-      returnList.add('$argName(this as $typeName$generics)');
-    }
+  String _maybeMap() {
+    return WhenUtils.generateMaybeMap(
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+  }
 
-    argumentMaybeMapList.add('required _T Function($_typeName$_generic) orElse');
-    argumentMaybeMapFutureList.add('required Future<_T> Function($_typeName$_generic) orElse');
+  String _when() {
+    return WhenUtils.generateWhen(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
+  }
 
-    final blockMapList = <String>[];
-    final blockMapFutureList = <String>[];
-    final blockMaybeMapList = <String>[];
-    final blockMaybeMapFutureList = <String>[];
-    final blockWhenList = <String>[];
-    final blockWhenFutureList = <String>[];
-    for (var i = 0; i < conditionMapList.length; ++i) {
-      blockMapList.add('''if (${conditionMapList[i]}) {
-        return ${returnList[i]};
-      }''');
-      blockMapFutureList.add('''if (${conditionMapList[i]}) { 
-        return ${returnList[i]};
-      }''');
-      blockMaybeMapList.add('''if (${conditionMaybeMapList[i]}) { 
-        return ${returnList[i]};
-      }''');
-      blockMaybeMapFutureList.add('''if (${conditionMaybeMapList[i]}) { 
-        return ${returnList[i]};
-      }''');
-      blockWhenList.add('''if (${conditionMaybeMapList[i]}) { 
-        ${returnList[i]};
-        return true;
-      }''');
-      blockWhenFutureList.add('''if (${conditionMaybeMapList[i]}) { 
-        await ${returnList[i]};
-        return true;
-      }''');
-    }
+  String _maybeWhen() {
+    return WhenUtils.generateMaybeWhen(
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+  }
 
-    return '''
-       _T map<_T>({
-          ${argumentMapList.join(',\n')},
-       }) {
-          ${blockMapList.join('\n')}
-          throw 'Invalid self type \$runtimeType';
-       }
-       
-       Future<_T> mapFuture<_T>({
-          ${argumentMapFutureList.join(',\n')},
-       }) {
-          ${blockMapFutureList.join('\n')}
-          throw 'Invalid self type \$runtimeType';
-       }
-       
-       _T maybeMap<_T>({
-          ${argumentMaybeMapList.join(',\n')},
-       }) {
-          ${blockMaybeMapList.join('\n')}
-          return orElse(this);
-       }
-       
-       Future<_T> maybeMapFuture<_T>({
-          ${argumentMaybeMapFutureList.join(',\n')},
-       }) {
-          ${blockMaybeMapFutureList.join('\n')}
-          return orElse(this);        
-       }
-       
-       bool when({
-          ${argumentWhenList.join(',\n')},
-       }) {
-          ${blockWhenList.join('\n')}
-          return false;
-       }
-       
-       Future<bool> whenFuture({
-         ${argumentWhenFutureList.join(',\n')},
-       }) async {
-         ${blockWhenFutureList.join('\n')}
-         return false;
-       }
-    ''';
+  String _whenFuture() {
+    return WhenUtils.generateWhenFuture(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
+  }
+
+  String _maybeWhenFuture() {
+    return WhenUtils.generateMaybeWhenFuture(
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+  }
+
+  String _is() {
+    return WhenUtils.generateIs(entities: _entities);
+  }
+
+  String _as() {
+    return WhenUtils.generateAs(entities: _entities);
   }
 
   void _buildDeclarations() {
@@ -232,11 +177,5 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
       _childDeclarations.add(childDeclaration);
     }
-  }
-
-  String _argName(ClassElement element) {
-    final typeName = _element.name;
-    final underTrimmedTypeName = RegExp(r'^_*(.*)$').firstMatch(typeName)!.group(1)!;
-    return underTrimmedTypeName.substring(0, 1).toLowerCase() + underTrimmedTypeName.substring(1);
   }
 }
