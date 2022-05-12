@@ -218,7 +218,8 @@ class WhenUtils {
 
   static String generateAs({required List<GeneratorEntity> entities}) {
     return entities
-        .map((e) => '${e.typeName}? get as${WhenUtils.toUpper(e.argName, 1)} => this as ${e.typeName}?;')
+        .map((e) => '${e.typeName}? get as${WhenUtils.toUpper(e.argName, 1)} => this is ${e.typeName} ? this as ${e
+        .typeName}? : null;')
         .join('\n\n');
   }
 }
