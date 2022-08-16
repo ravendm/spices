@@ -15,7 +15,7 @@ class WhenEnumGenerator extends GeneratorForAnnotation<WhenEnum> {
 
   @override
   String generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
-    if (element is! ClassElement || !element.isEnum) {
+    if (element is! ClassElement || element is! EnumElement) {
       throw '$element не enum';
     }
 

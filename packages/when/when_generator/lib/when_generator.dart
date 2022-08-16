@@ -32,18 +32,15 @@ class ChildDeclaration {
 }
 
 class WhenGenerator extends GeneratorForAnnotation<When> {
-  late ClassElement _element;
-  late List<ClassElement> _children;
-  late ConstantReader _annotation;
-  late List<String> _genericList;
-  late List<ChildDeclaration> _childDeclarations;
+  List<String> _genericList(ClassElement element) => element.typeParameters.map((e) => e.name).toList();
 
-  String get _typeName => _element.name;
+  String _typeName(ClassElement element) => element.name;
 
-  String get _generic => _genericList.isNotEmpty ? '<${_genericList.join(', ')}>' : '';
+  String _generic(ClassElement element) =>
+      _genericList(element).isNotEmpty ? '<${_genericList(element).join(', ')}>' : '';
 
-  List<GeneratorEntity> get _entities =>
-      _childDeclarations.map((e) => GeneratorClassEntity(argName: e.argumentName, typeName: e.typeName)).toList();
+  List<GeneratorEntity> _entities(List<ChildDeclaration> childDeclarations) =>
+      childDeclarations.map((e) => GeneratorClassEntity(argName: e.argumentName, typeName: e.typeName)).toList();
 
   Logger get logger => Logger('WhenGenerator');
 
@@ -55,104 +52,109 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
   ) async {
     if (element is! ClassElement) throw '$element is not a ClassElement';
 
-    _element = element;
-    _annotation = annotation;
-    _genericList = _element.typeParameters.map((e) => e.name).toList();
+    final generic = _generic(element);
+    final typeName = _typeName(element);
 
     logger.info('WhenGenerator build');
-    logger.info('> type name [${_element.displayName}]${_generic.isNotEmpty ? ' generics: $_generic' : ''}');
+    logger.info('> type name [${element.displayName}]${generic.isNotEmpty ? ' generics: $generic' : ''}');
 
-    final extensionName = '${_element.name}WhenExtension';
+    final extensionName = '${element.name}WhenExtension';
 
     // _children = _annotation.read('children').listValue.map((e) => e.toTypeValue()!.element! as ClassElement).toList();
 
     final inputLibrary = await buildStep.inputLibrary;
     final classes = inputLibrary.units.expand((cu) => cu.classes);
 
-    _children = [];
+    final children = <ClassElement>[];
 
     for (final klass in classes) {
-      if (klass.allSupertypes.map((e) => e.element).contains(_element)) {
-        _children.add(klass);
+      if (klass.allSupertypes.map((e) => e.element2).contains(element)) {
+        children.add(klass);
       }
     }
 
-    logger.info('> children: ' + _children.map((e) => e.displayName).toList().join(', '));
+    print('> type name [${element.displayName}]${generic.isNotEmpty ? ' generics: $generic' : ''}');
+    print('> children: ' + children.map((e) => e.displayName).toList().join(', '));
 
-    _buildDeclarations();
+    logger.info('> children: ' + children.map((e) => e.displayName).toList().join(', '));
+
+    final childDeclarations = _buildDeclarations(element, children);
+    final entities = _entities(childDeclarations);
 
     final result = '''
-    extension $extensionName$_generic on $_typeName$_generic {
-       ${_map()}
-       ${_maybeMap()}
-       ${_when()}
-       ${_maybeWhen()}
-       ${_whenFuture()}
-       ${_maybeWhenFuture()}
+    extension $extensionName$generic on $typeName$generic {
+       ${_map(entities)}
+       ${_maybeMap(element, entities)}
+       ${_when(entities)}
+       ${_maybeWhen(element, entities)}
+       ${_whenFuture(entities)}
+       ${_maybeWhenFuture(element, entities)}
        
-       ${_is()}
+       ${_is(entities)}
        
-       ${_as()}
+       ${_as(entities)}
     }
     ''';
+
+    print(result);
 
     return result;
   }
 
-  String _map() {
+  String _map(List<GeneratorEntity> _entities) {
     return WhenUtils.generateMap(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
   }
 
-  String _maybeMap() {
+  String _maybeMap(ClassElement element, List<GeneratorEntity> _entities) {
     return WhenUtils.generateMaybeMap(
-        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: element.name);
   }
 
-  String _when() {
+  String _when(List<GeneratorEntity> _entities) {
     return WhenUtils.generateWhen(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
   }
 
-  String _maybeWhen() {
+  String _maybeWhen(ClassElement element, List<GeneratorEntity> _entities) {
     return WhenUtils.generateMaybeWhen(
-        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: element.name);
   }
 
-  String _whenFuture() {
+  String _whenFuture(List<GeneratorEntity> _entities) {
     return WhenUtils.generateWhenFuture(entities: _entities, errorMessage: WhenUtils.typeErrorMessage);
   }
 
-  String _maybeWhenFuture() {
+  String _maybeWhenFuture(ClassElement element, List<GeneratorEntity> _entities) {
     return WhenUtils.generateMaybeWhenFuture(
-        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: _element.name);
+        entities: _entities, errorMessage: WhenUtils.typeErrorMessage, orElseArgument: element.name);
   }
 
-  String _is() {
+  String _is(List<GeneratorEntity> _entities) {
     return WhenUtils.generateIs(entities: _entities);
   }
 
-  String _as() {
+  String _as(List<GeneratorEntity> _entities) {
     return WhenUtils.generateAs(entities: _entities);
   }
 
-  void _buildDeclarations() {
-    _childDeclarations = [];
+  List<ChildDeclaration> _buildDeclarations(ClassElement element, List<ClassElement> children) {
+    final _childDeclarations = <ChildDeclaration>[];
 
     var removePrefix = true;
-    for (final child in _children) {
-      if (!child.name.startsWith(_element.name)) {
+    for (final child in children) {
+      if (!child.name.startsWith(element.name)) {
         removePrefix = false;
         break;
       }
     }
 
-    for (final child in _children) {
+    for (final child in children) {
       /// argument name
       final typeName = child.name;
       final underTrimmedTypeName = RegExp(r'^_*(.*)$').firstMatch(typeName)!.group(1)!;
       var argName = underTrimmedTypeName.substring(0, 1).toLowerCase() + underTrimmedTypeName.substring(1);
 
       if (removePrefix) {
-        argName = argName.substring(_element.name.length);
+        argName = argName.substring(element.name.length);
         argName = argName.substring(0, 1).toLowerCase() + argName.substring(1);
       }
 
@@ -160,7 +162,7 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
       final childGenericList = <String>[];
       final gList = <String>[];
 
-      if (_element.typeParameters.isNotEmpty) {
+      if (element.typeParameters.isNotEmpty) {
         /// child raw generic list names
         childGenericList.addAll(child.typeParameters.map((e) => e.name));
 
@@ -180,13 +182,13 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
           }
         }
 
-        if (_genericList.isNotEmpty && childGenericList.isNotEmpty && childToSuperGenericIndexes.isNotEmpty) {
+        if (_genericList(element).isNotEmpty && childGenericList.isNotEmpty && childToSuperGenericIndexes.isNotEmpty) {
           for (var i = 0; i < childGenericList.length; ++i) {
             if (!childToSuperGenericIndexes.containsKey(i)) {
               gList.add('dynamic');
             } else {
               final pi = childToSuperGenericIndexes[i]!;
-              gList.add(_genericList[pi]);
+              gList.add(_genericList(element)[pi]);
             }
           }
         }
@@ -203,5 +205,7 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
       _childDeclarations.add(childDeclaration);
     }
+
+    return _childDeclarations;
   }
 }

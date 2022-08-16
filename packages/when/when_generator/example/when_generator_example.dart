@@ -53,3 +53,53 @@ enum Enum1 {
 extension E1 on Enum1 {
   bool get isA => true;
 }
+
+@When()
+abstract class DepartmentState {
+  const DepartmentState();
+}
+
+class DepartmentStateInitial extends DepartmentState {
+  const DepartmentStateInitial();
+}
+
+class DepartmentStateSuccess extends DepartmentState {
+  const DepartmentStateSuccess({required this.items, this.department, this.address});
+
+  final List<DepartmentEntity> items;
+  final DepartmentEntity? department;
+  final AddressEntity? address;
+}
+
+@When()
+abstract class CatalogState {
+  const CatalogState();
+}
+
+class CatalogStateInitial extends CatalogState {
+  const CatalogStateInitial();
+}
+
+class CatalogStateLoading extends CatalogState {
+  const CatalogStateLoading();
+}
+
+class CatalogStateSuccess extends CatalogState {
+  const CatalogStateSuccess({required this.catalog});
+
+  final CatalogEntity catalog;
+}
+
+class CatalogStateFailure extends CatalogState {
+  const CatalogStateFailure();
+}
+
+class CatalogProvider extends ValueNotifier<CatalogState> {
+  CatalogProvider({required this.catalogApi}) : super(const CatalogStateInitial());
+
+  final CatalogApi catalogApi;
+
+  Future<void> init() async {
+    value = CatalogStateSuccess(catalog: await catalogApi.catalog());
+  }
+}
