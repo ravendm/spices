@@ -48,12 +48,13 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
   Logger get logger => Logger('WhenGenerator');
 
   @override
-  String generateForAnnotatedElement(
+  Future<String> generateForAnnotatedElement(
     Element element,
     ConstantReader annotation,
     BuildStep buildStep,
-  ) {
+  ) async {
     if (element is! ClassElement) throw '$element is not a ClassElement';
+
     _element = element;
     _annotation = annotation;
     _genericList = _element.typeParameters.map((e) => e.name).toList();
@@ -63,7 +64,18 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
     final extensionName = '${_element.name}WhenExtension';
 
-    _children = _annotation.read('children').listValue.map((e) => e.toTypeValue()!.element! as ClassElement).toList();
+    // _children = _annotation.read('children').listValue.map((e) => e.toTypeValue()!.element! as ClassElement).toList();
+
+    final inputLibrary = await buildStep.inputLibrary;
+    final classes = inputLibrary.units.expand((cu) => cu.classes);
+
+    _children = [];
+
+    for (final klass in classes) {
+      if (klass.allSupertypes.map((e) => e.element).contains(_element)) {
+        _children.add(klass);
+      }
+    }
 
     logger.info('> children: ' + _children.map((e) => e.displayName).toList().join(', '));
 
@@ -124,11 +136,25 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
 
   void _buildDeclarations() {
     _childDeclarations = [];
+
+    var removePrefix = true;
+    for (final child in _children) {
+      if (!child.name.startsWith(_element.name)) {
+        removePrefix = false;
+        break;
+      }
+    }
+
     for (final child in _children) {
       /// argument name
       final typeName = child.name;
       final underTrimmedTypeName = RegExp(r'^_*(.*)$').firstMatch(typeName)!.group(1)!;
-      final argName = underTrimmedTypeName.substring(0, 1).toLowerCase() + underTrimmedTypeName.substring(1);
+      var argName = underTrimmedTypeName.substring(0, 1).toLowerCase() + underTrimmedTypeName.substring(1);
+
+      if (removePrefix) {
+        argName = argName.substring(_element.name.length);
+        argName = argName.substring(0, 1).toLowerCase() + argName.substring(1);
+      }
 
       final childToSuperGenericIndexes = <int, int>{};
       final childGenericList = <String>[];

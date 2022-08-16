@@ -2,7 +2,14 @@ import 'package:when/when.dart';
 
 part 'when_generator_example.g.dart';
 
-@When(children: [_Player, _Monster, _EmptyNPC])
+@When()
+abstract class UserState {}
+
+class UserStateInitial extends UserState {}
+
+class UserStateGuest extends UserState {}
+
+@When()
 abstract class Mobile<T1, T2> {
   const Mobile({required this.pos, required this.data});
 
@@ -28,19 +35,13 @@ class _EmptyNPC extends Mobile {
   const _EmptyNPC({required int pos}) : super(pos: pos, data: null);
 }
 
-@When(children: [B, C])
-class A {
+@When()
+class A {}
 
-}
+@When()
+class B extends A {}
 
-@When(children: [C])
-class B extends A {
-
-}
-
-class C extends B {
-
-}
+class C extends B {}
 
 @WhenEnum()
 enum Enum1 {

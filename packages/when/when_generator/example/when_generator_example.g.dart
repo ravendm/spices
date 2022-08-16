@@ -6,6 +6,95 @@ part of 'when_generator_example.dart';
 // WhenGenerator
 // **************************************************************************
 
+extension UserStateWhenExtension on UserState {
+  _T map<_T>({
+    required _T Function(UserStateInitial) initial,
+    required _T Function(UserStateGuest) guest,
+  }) {
+    if (this is UserStateInitial) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest) {
+      return guest(this as UserStateGuest);
+    }
+    throw 'Invalid self type $this';
+  }
+
+  _T maybeMap<_T>({
+    _T Function(UserStateInitial)? initial,
+    _T Function(UserStateGuest)? guest,
+    required _T Function(UserState) orElse,
+  }) {
+    if (this is UserStateInitial && initial != null) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest && guest != null) {
+      return guest(this as UserStateGuest);
+    } else {
+      return orElse(this);
+    }
+  }
+
+  void when({
+    required void Function(UserStateInitial) initial,
+    required void Function(UserStateGuest) guest,
+  }) {
+    if (this is UserStateInitial) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest) {
+      return guest(this as UserStateGuest);
+    }
+    throw 'Invalid self type $this';
+  }
+
+  void maybeWhen({
+    void Function(UserStateInitial)? initial,
+    void Function(UserStateGuest)? guest,
+    void Function(UserState)? orElse,
+  }) {
+    if (this is UserStateInitial && initial != null) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest && guest != null) {
+      return guest(this as UserStateGuest);
+    } else if (orElse != null) {
+      return orElse(this);
+    }
+  }
+
+  Future<void> whenFuture({
+    required Future<void> Function(UserStateInitial) initial,
+    required Future<void> Function(UserStateGuest) guest,
+  }) {
+    if (this is UserStateInitial) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest) {
+      return guest(this as UserStateGuest);
+    }
+    throw 'Invalid self type $this';
+  }
+
+  Future<void> maybeWhenFuture({
+    Future<void> Function(UserStateInitial)? initial,
+    Future<void> Function(UserStateGuest)? guest,
+    Future<void> Function(UserState)? orElse,
+  }) {
+    if (this is UserStateInitial && initial != null) {
+      return initial(this as UserStateInitial);
+    } else if (this is UserStateGuest && guest != null) {
+      return guest(this as UserStateGuest);
+    } else if (orElse != null) {
+      return orElse(this);
+    }
+    return Future.value();
+  }
+
+  bool get isInitial => this is UserStateInitial;
+
+  bool get isGuest => this is UserStateGuest;
+
+  UserStateInitial? get asInitial => this is UserStateInitial ? this as UserStateInitial? : null;
+
+  UserStateGuest? get asGuest => this is UserStateGuest ? this as UserStateGuest? : null;
+}
+
 extension MobileWhenExtension<T1, T2> on Mobile<T1, T2> {
   _T map<_T>({
     required _T Function(_Player) player,
@@ -26,7 +115,7 @@ extension MobileWhenExtension<T1, T2> on Mobile<T1, T2> {
     _T Function(_Player)? player,
     _T Function(_Monster)? monster,
     _T Function(_EmptyNPC)? emptyNPC,
-    required _T orElse(Mobile),
+    required _T Function(Mobile) orElse,
   }) {
     if (this is _Player && player != null) {
       return player(this as _Player);
@@ -110,11 +199,11 @@ extension MobileWhenExtension<T1, T2> on Mobile<T1, T2> {
 
   bool get isEmptyNPC => this is _EmptyNPC;
 
-  _Player? get asPlayer => this as _Player?;
+  _Player? get asPlayer => this is _Player ? this as _Player? : null;
 
-  _Monster? get asMonster => this as _Monster?;
+  _Monster? get asMonster => this is _Monster ? this as _Monster? : null;
 
-  _EmptyNPC? get asEmptyNPC => this as _EmptyNPC?;
+  _EmptyNPC? get asEmptyNPC => this is _EmptyNPC ? this as _EmptyNPC? : null;
 }
 
 extension AWhenExtension on A {
@@ -133,7 +222,7 @@ extension AWhenExtension on A {
   _T maybeMap<_T>({
     _T Function(B)? b,
     _T Function(C)? c,
-    required _T orElse(A),
+    required _T Function(A) orElse,
   }) {
     if (this is B && b != null) {
       return b(this as B);
@@ -201,9 +290,9 @@ extension AWhenExtension on A {
 
   bool get isC => this is C;
 
-  B? get asB => this as B?;
+  B? get asB => this is B ? this as B? : null;
 
-  C? get asC => this as C?;
+  C? get asC => this is C ? this as C? : null;
 }
 
 extension BWhenExtension on B {
@@ -218,7 +307,7 @@ extension BWhenExtension on B {
 
   _T maybeMap<_T>({
     _T Function(C)? c,
-    required _T orElse(B),
+    required _T Function(B) orElse,
   }) {
     if (this is C && c != null) {
       return c(this as C);
@@ -270,7 +359,7 @@ extension BWhenExtension on B {
 
   bool get isC => this is C;
 
-  C? get asC => this as C?;
+  C? get asC => this is C ? this as C? : null;
 }
 
 // **************************************************************************
@@ -297,7 +386,7 @@ extension Enum1Extension on Enum1 {
     _T Function()? success,
     _T Function()? error,
     _T Function()? loading,
-    required _T orElse(Enum1),
+    required _T Function(Enum1) orElse,
   }) {
     if (this == Enum1.success && success != null) {
       return success();
