@@ -1,7 +1,7 @@
 library when;
 
 class When {
-  const When({required this.children});
+  const When({this.children = const []});
 
   final List<Type> children;
 }

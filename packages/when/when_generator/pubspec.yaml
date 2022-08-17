@@ -1,6 +1,6 @@
 name: when_generator
 description: A starting point for Dart libraries or applications.
-version: 3.0.3
+version: 3.0.4
 publish_to: 'none'
 
 environment:

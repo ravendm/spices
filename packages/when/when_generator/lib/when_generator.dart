@@ -96,8 +96,6 @@ class WhenGenerator extends GeneratorForAnnotation<When> {
     }
     ''';
 
-    print(result);
-
     return result;
   }
 
