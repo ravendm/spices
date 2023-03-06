@@ -8,9 +8,8 @@ environment:
 
 dependencies:
   when:
-#    path: ./../when
     git:
-      url: https://github.com/urusai88/spices.git
+      url: https://github.com/ravendm/spices.git
       path: packages/when/when
       ref: 3.0.5
   source_gen: ^1.2.0
