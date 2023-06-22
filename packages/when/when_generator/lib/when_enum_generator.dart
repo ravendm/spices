@@ -5,7 +5,7 @@ import 'package:when/when.dart';
 import 'package:when_generator/utils.dart';
 
 class WhenEnumGenerator extends GeneratorForAnnotation<WhenEnum> {
-  late ClassElement _element;
+  late EnumElement _element;
   late List<FieldElement> _constants;
 
   List<GeneratorEntity> get _entities => _constants
@@ -15,8 +15,8 @@ class WhenEnumGenerator extends GeneratorForAnnotation<WhenEnum> {
 
   @override
   String generateForAnnotatedElement(Element element, ConstantReader annotation, BuildStep buildStep) {
-    if (element is! ClassElement || element is! EnumElement) {
-      throw '$element не enum';
+    if (element is! EnumElement) {
+      throw '$element не enum, ${element.runtimeType}';
     }
 
     _element = element;
